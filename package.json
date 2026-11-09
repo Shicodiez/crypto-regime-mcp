@@ -1,0 +1,48 @@
+{
+  "name": "@shicodiez/crypto-regime-mcp",
+  "version": "0.1.3",
+  "mcpName": "io.github.Shicodiez/crypto-regime-mcp",
+  "description": "Stdio MCP bridge for crypto trend/regime tools with automatic x402 payments.",
+  "type": "module",
+  "bin": {
+    "crypto-regime-mcp": "src/index.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "x402",
+    "crypto",
+    "trend",
+    "regime",
+    "volatility",
+    "base",
+    "usdc"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shicodiez/crypto-regime-mcp.git"
+  },
+  "homepage": "https://signal-api.shicoars.workers.dev",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@x402/core": "2.30.0",
+    "@x402/evm": "2.30.0",
+    "@x402/mcp": "2.30.0",
+    "viem": "^2.57.16"
+  }
+}
