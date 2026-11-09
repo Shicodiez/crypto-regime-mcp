@@ -12,86 +12,92 @@ import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { createx402MCPClient } from "@x402/mcp";
 import { privateKeyToAccount } from "viem/accounts";
 
+import {
+  API_KEY_TOOL_DEFINITIONS,
+  createSignalApiClient,
+  isApiKeyTool,
+} from "./api.js";
+import {
+  DEFAULT_MCP_URL,
+  DEFAULT_NETWORK,
+  getPrivateKey,
+  parseMaxSpend,
+  resolveApiBaseUrl,
+  resolveSignalApiKey,
+} from "./config.js";
 import { createSpendTracker, usdcFromAtomic } from "./spend.js";
 
-const VERSION = "0.1.3";
-const DEFAULT_MCP_URL = "https://signal-api.shicoars.workers.dev/mcp";
-const DEFAULT_NETWORK = "eip155:8453";
-const DEFAULT_MAX_SPEND_USDC = 1;
+const VERSION = "0.1.4";
 
 function log(message) {
   // stdout is reserved for the MCP stdio protocol.
   console.error(`[crypto-regime-mcp] ${message}`);
 }
 
-function parseMaxSpend() {
-  const raw = process.env.MAX_SPEND_USDC;
-  if (raw === undefined || raw.trim() === "") {
-    return DEFAULT_MAX_SPEND_USDC;
-  }
-  const value = Number(raw);
-  if (!Number.isFinite(value) || value < 0) {
-    throw new Error("MAX_SPEND_USDC must be a non-negative number");
-  }
-  return value;
-}
-
-function getPrivateKey() {
-  const raw = process.env.EVM_PRIVATE_KEY?.trim();
-  if (!raw || !/^0x[0-9a-fA-F]{64}$/.test(raw)) {
-    throw new Error("EVM_PRIVATE_KEY must be a 32-byte hex private key (0x...)");
-  }
-  return raw;
-}
-
 async function main() {
-  const mcpUrl = process.env.SIGNAL_API_MCP_URL ?? DEFAULT_MCP_URL;
-  const network = process.env.NETWORK ?? DEFAULT_NETWORK;
-  const maxSpendUsdc = parseMaxSpend();
-  const account = privateKeyToAccount(getPrivateKey());
-  const tracker = createSpendTracker(maxSpendUsdc);
-
-  const paymentClient = createx402MCPClient({
-    name: "crypto-regime-mcp",
-    version: VERSION,
-    schemes: [
-      {
-        network,
-        client: new ExactEvmScheme(account),
-      },
-    ],
-    spendControls:
-      maxSpendUsdc > 0
-        ? { maxAmountPerPayment: `$${maxSpendUsdc}` }
-        : false,
-    autoPayment: true,
-    onPaymentRequested: async ({ paymentRequired }) => {
-      const accept = paymentRequired.accepts?.[0];
-      if (!accept) {
-        log("payment blocked: no accepts entry");
-        return false;
-      }
-      const amountUsd = usdcFromAtomic(accept.amount);
-      if (amountUsd === null) {
-        log(`payment blocked: invalid amount ${accept.amount}`);
-        return false;
-      }
-      if (!tracker.canSpend(amountUsd)) {
-        log(
-          `payment blocked: $${amountUsd} would exceed MAX_SPEND_USDC=$${maxSpendUsdc} (spent $${tracker.spentUsdc})`,
-        );
-        return false;
-      }
-      tracker.record(amountUsd);
-      log(
-        `authorizing $${amountUsd} on ${accept.network} to ${accept.payTo} (spent $${tracker.spentUsdc}/$${maxSpendUsdc})`,
-      );
-      return true;
-    },
-  });
-
+  const env = process.env;
+  const mcpUrl = env.SIGNAL_API_MCP_URL ?? DEFAULT_MCP_URL;
+  const apiKey = resolveSignalApiKey(env);
+  const apiBaseUrl = resolveApiBaseUrl(env, mcpUrl);
   const transport = new StreamableHTTPClientTransport(new URL(mcpUrl));
-  await paymentClient.connect(transport);
+
+  let client;
+  let apiClient = null;
+  let account = null;
+  let maxSpendUsdc = null;
+
+  if (apiKey) {
+    client = new Client({ name: "crypto-regime-mcp", version: VERSION });
+    await client.connect(transport);
+    apiClient = createSignalApiClient({ baseUrl: apiBaseUrl, apiKey });
+  } else {
+    const network = env.NETWORK ?? DEFAULT_NETWORK;
+    maxSpendUsdc = parseMaxSpend(env.MAX_SPEND_USDC);
+    account = privateKeyToAccount(getPrivateKey(env));
+    const tracker = createSpendTracker(maxSpendUsdc);
+
+    const paymentClient = createx402MCPClient({
+      name: "crypto-regime-mcp",
+      version: VERSION,
+      schemes: [
+        {
+          network,
+          client: new ExactEvmScheme(account),
+        },
+      ],
+      spendControls:
+        maxSpendUsdc > 0
+          ? { maxAmountPerPayment: `$${maxSpendUsdc}` }
+          : false,
+      autoPayment: true,
+      onPaymentRequested: async ({ paymentRequired }) => {
+        const accept = paymentRequired.accepts?.[0];
+        if (!accept) {
+          log("payment blocked: no accepts entry");
+          return false;
+        }
+        const amountUsd = usdcFromAtomic(accept.amount);
+        if (amountUsd === null) {
+          log(`payment blocked: invalid amount ${accept.amount}`);
+          return false;
+        }
+        if (!tracker.canSpend(amountUsd)) {
+          log(
+            `payment blocked: $${amountUsd} would exceed MAX_SPEND_USDC=$${maxSpendUsdc} (spent $${tracker.spentUsdc})`,
+          );
+          return false;
+        }
+        tracker.record(amountUsd);
+        log(
+          `authorizing $${amountUsd} on ${accept.network} to ${accept.payTo} (spent $${tracker.spentUsdc}/$${maxSpendUsdc})`,
+        );
+        return true;
+      },
+    });
+
+    await paymentClient.connect(transport);
+    client = paymentClient;
+  }
 
   const server = new Server(
     { name: "crypto-regime-mcp", version: VERSION },
@@ -99,14 +105,26 @@ async function main() {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    const result = await paymentClient.listTools();
-    return { tools: result.tools };
+    const result = await client.listTools();
+    if (!apiClient) {
+      return { tools: result.tools };
+    }
+
+    const tools = new Map(result.tools.map((tool) => [tool.name, tool]));
+    for (const tool of API_KEY_TOOL_DEFINITIONS) {
+      tools.set(tool.name, tool);
+    }
+    return { tools: [...tools.values()] };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     try {
-      const result = await paymentClient.callTool(name, args ?? {});
+      if (apiClient && isApiKeyTool(name)) {
+        return await apiClient.callTool(name, args ?? {});
+      }
+
+      const result = await client.callTool(name, args ?? {});
       const meta = { ...(result._meta ?? {}) };
       if (result.paymentResponse) {
         meta["x402/payment-response"] = result.paymentResponse;
@@ -128,9 +146,15 @@ async function main() {
   });
 
   await server.connect(new StdioServerTransport());
-  log(
-    `connected to ${mcpUrl} as ${account.address}; MAX_SPEND_USDC=$${maxSpendUsdc}`,
-  );
+  if (apiClient) {
+    log(
+      `connected to ${mcpUrl} in credit mode via ${apiBaseUrl}; SIGNAL_API_KEY is set, paid tools use /v1/* without x402`,
+    );
+  } else {
+    log(
+      `connected to ${mcpUrl} as ${account.address}; MAX_SPEND_USDC=$${maxSpendUsdc}`,
+    );
+  }
 }
 
 main().catch((error) => {

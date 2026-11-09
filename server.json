@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Shicodiez/crypto-regime-mcp",
   "title": "Crypto Regime MCP",
-  "description": "Crypto trend and regime MCP tools with automatic x402 payments on Base.",
-  "version": "0.1.3",
+  "description": "Crypto trend and regime MCP tools with automatic x402 payments or prepaid credits.",
+  "version": "0.1.4",
   "websiteUrl": "https://signal-api.shicoars.workers.dev",
   "repository": {
     "url": "https://github.com/Shicodiez/crypto-regime-mcp",
@@ -13,25 +13,39 @@
     {
       "registryType": "npm",
       "identifier": "@shicodiez/crypto-regime-mcp",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
+          "name": "SIGNAL_API_KEY",
+          "description": "Prepaid credit key (sk_...) returned by POST /credits/buy/starter or /credits/buy/pro. When set, paid tools call /v1/* with X-API-Key and no x402 signing is used.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
           "name": "EVM_PRIVATE_KEY",
-          "description": "EVM private key used to sign x402 payments. Use a dedicated low-balance wallet.",
-          "isRequired": true,
+          "description": "EVM private key used to sign x402 payments when SIGNAL_API_KEY is not set. Use a dedicated low-balance wallet.",
+          "isRequired": false,
           "format": "string",
           "isSecret": true
         },
         {
           "name": "MAX_SPEND_USDC",
-          "description": "Maximum USDC the bridge may spend per session. Defaults to 1.",
+          "description": "Maximum USDC the bridge may spend per session in x402 mode. Defaults to 1.",
           "isRequired": false,
           "format": "string",
           "default": "1"
+        },
+        {
+          "name": "SIGNAL_API_URL",
+          "description": "REST base URL used in credit mode. Defaults to the origin of the MCP URL.",
+          "isRequired": false,
+          "format": "string",
+          "default": "https://signal-api.shicoars.workers.dev"
         }
       ]
     }
