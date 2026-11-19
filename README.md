@@ -65,16 +65,17 @@ amount the bridge may authorize per session.
 | `get_market_scan` | 0.05 USDC | 10 | All catalog assets plus bullish/bearish, RSI and regime rankings. |
 | `get_trend` | 0.005 USDC | 1 | Daily LONG/FLAT trend signal and exposure for one asset. |
 | `get_regime` | 0.005 USDC | 1 | Bullish/bearish/lateral regime and volatility for one asset. |
-| `get_regime_stats` | 0.02 USDC | 1 | Episode counts, mean/median 7/14/30-day returns, hit rate, drawdown and bootstrap confidence intervals. Historical statistics, not a prediction. |
+| `get_regime_stats` | 0.02 USDC | 4 | Episode counts, mean/median 7/14/30-day returns, hit rate, drawdown and bootstrap confidence intervals. Historical statistics, not a prediction. |
 | `get_indicators` | 0.005 USDC | 1 | RSI14, MACD, ATR14, Bollinger %B, returns and 30d/90d ranges. |
 | `get_derivatives` | 0.005 USDC | 1 | Hyperliquid perpetuals: hourly funding, open interest, mark/oracle price and basis for one asset. |
-| `get_derivatives_scan` | 0.05 USDC | 1 | Funding and open interest rankings across all assets with fresh derivatives data. |
+| `get_derivatives_scan` | 0.05 USDC | 10 | Funding and open interest rankings across all assets with fresh derivatives data. |
 
 Network for x402: **Base mainnet** (`eip155:8453`), paid in **USDC**.
 
-Credits are charged per request: `get_market_scan` costs 10 credits and the other
-paid tools cost 1 credit. Insufficient credits return HTTP 402 with the current
-balance; an invalid key returns HTTP 401.
+Credits are charged per request: `get_market_scan` and `get_derivatives_scan`
+cost 10 credits, `get_regime_stats` costs 4 credits and the other paid tools
+cost 1 credit. Insufficient credits return HTTP 402 with the current balance; an
+invalid key returns HTTP 401.
 
 ## Requirements
 

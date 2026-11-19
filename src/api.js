@@ -68,7 +68,7 @@ export const API_KEY_TOOL_DEFINITIONS = Object.freeze([
   {
     name: "get_regime_stats",
     description:
-      "Get historical regime statistics for one crypto asset: episode counts, mean/median 7/14/30-day returns, hit rate, drawdown and episode-bootstrap confidence intervals. Historical statistics, not a prediction. Uses prepaid credits via X-API-Key (1 credit). Discover assets with list_assets.",
+      "Get historical regime statistics for one crypto asset: episode counts, mean/median 7/14/30-day returns, hit rate, drawdown and episode-bootstrap confidence intervals. Historical statistics, not a prediction. Uses prepaid credits via X-API-Key (4 credits). Discover assets with list_assets.",
     inputSchema: assetSchema(
       "Asset id or symbol, e.g. BTC, ETH, SOL, or regime-stats-btc.",
     ),
@@ -86,7 +86,7 @@ export const API_KEY_TOOL_DEFINITIONS = Object.freeze([
   {
     name: "get_derivatives_scan",
     description:
-      "Get the Hyperliquid perpetual derivatives scan: funding and open interest rankings across all assets with fresh derivatives data. Uses prepaid credits via X-API-Key (1 credit).",
+      "Get the Hyperliquid perpetual derivatives scan: funding and open interest rankings across all assets with fresh derivatives data. Uses prepaid credits via X-API-Key (10 credits).",
     inputSchema: EMPTY_SCHEMA,
     annotations: { readOnlyHint: true, idempotentHint: true },
   },

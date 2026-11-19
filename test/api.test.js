@@ -105,31 +105,39 @@ test("rejects asset tools without an asset argument before calling the API", asy
   assert.equal(calls.length, 0);
 });
 
-test("credit-mode /p tools use one credit and accept full product ids", async () => {
-  const { client, calls } = clientWith(() =>
-    jsonResponse(
+test("credit-mode /p tools charge product-specific credits and accept full product ids", async () => {
+  const cases = [
+    [
+      "get_regime_stats",
+      { asset: "regime-stats-btc" },
+      "/p/regime-stats-btc",
+      4,
+    ],
+    ["get_derivatives", { asset: "derivatives-ETH" }, "/p/derivatives-eth", 1],
+    ["get_derivatives_scan", {}, "/p/derivatives-scan", 10],
+  ];
+  const charges = new Map(cases.map(([, , path, charged]) => [path, charged]));
+  const { client, calls } = clientWith((url) => {
+    const path = new URL(url).pathname;
+    const charged = charges.get(path);
+    assert.notEqual(charged, undefined);
+    return jsonResponse(
       { ok: true },
       200,
       {
-        "X-Credits-Charged": "1",
-        "X-Credits-Balance": "1999",
+        "X-Credits-Charged": String(charged),
+        "X-Credits-Balance": String(2000 - charged),
       },
-    ),
-  );
+    );
+  });
 
-  const cases = [
-    ["get_regime_stats", { asset: "regime-stats-btc" }, "/p/regime-stats-btc"],
-    ["get_derivatives", { asset: "derivatives-ETH" }, "/p/derivatives-eth"],
-    ["get_derivatives_scan", {}, "/p/derivatives-scan"],
-  ];
-
-  for (const [name, args, path] of cases) {
+  for (const [name, args, path, charged] of cases) {
     assert.deepEqual(resolveApiPath(name, args), { path });
     const result = await client.callTool(name, args);
     assert.equal(result.isError, undefined);
     assert.deepEqual(result._meta["signal-api/credits"], {
-      charged: 1,
-      balance: 1999,
+      charged,
+      balance: 2000 - charged,
     });
   }
 
