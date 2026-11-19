@@ -74,6 +74,9 @@ test("maps every credit-mode tool to the expected REST route", async () => {
     ["get_trend", { asset: "eth" }, "/v1/trend/eth"],
     ["get_regime", { asset: "SOL" }, "/v1/regime/SOL"],
     ["get_indicators", { asset: "trend-btc" }, "/v1/indicators/trend-btc"],
+    ["get_regime_stats", { asset: "BTC" }, "/p/regime-stats-btc"],
+    ["get_derivatives", { asset: "eth" }, "/p/derivatives-eth"],
+    ["get_derivatives_scan", {}, "/p/derivatives-scan"],
     ["get_sample", { asset: "BTC" }, "/free/BTC"],
     ["get_credit_balance", {}, "/credits/balance"],
   ];
@@ -93,11 +96,47 @@ test("maps every credit-mode tool to the expected REST route", async () => {
 test("rejects asset tools without an asset argument before calling the API", async () => {
   const { client, calls } = clientWith(() => jsonResponse({ ok: true }));
 
-  const result = await client.callTool("get_trend", {});
+  for (const name of ["get_trend", "get_regime_stats", "get_derivatives"]) {
+    const result = await client.callTool(name, {});
+    assert.equal(result.isError, true);
+    assert.match(JSON.parse(result.content[0].text).error, /asset/);
+  }
 
   assert.equal(calls.length, 0);
-  assert.equal(result.isError, true);
-  assert.match(JSON.parse(result.content[0].text).error, /asset/);
+});
+
+test("credit-mode /p tools use one credit and accept full product ids", async () => {
+  const { client, calls } = clientWith(() =>
+    jsonResponse(
+      { ok: true },
+      200,
+      {
+        "X-Credits-Charged": "1",
+        "X-Credits-Balance": "1999",
+      },
+    ),
+  );
+
+  const cases = [
+    ["get_regime_stats", { asset: "regime-stats-btc" }, "/p/regime-stats-btc"],
+    ["get_derivatives", { asset: "derivatives-ETH" }, "/p/derivatives-eth"],
+    ["get_derivatives_scan", {}, "/p/derivatives-scan"],
+  ];
+
+  for (const [name, args, path] of cases) {
+    assert.deepEqual(resolveApiPath(name, args), { path });
+    const result = await client.callTool(name, args);
+    assert.equal(result.isError, undefined);
+    assert.deepEqual(result._meta["signal-api/credits"], {
+      charged: 1,
+      balance: 1999,
+    });
+  }
+
+  assert.deepEqual(
+    calls.map((call) => call.url),
+    cases.map(([, , path]) => `https://api.example${path}`),
+  );
 });
 
 test("returns API errors as MCP error results", async () => {
@@ -142,15 +181,26 @@ test("resolves paths without side effects", () => {
   assert.equal(resolveApiPath("list_assets"), null);
 });
 
-test("exposes get_market_scan, get_sample and get_credit_balance definitions", () => {
+test("exposes all ten credit-mode tool definitions", () => {
   const tools = new Map(
     API_KEY_TOOL_DEFINITIONS.map((tool) => [tool.name, tool]),
   );
 
-  assert.equal(tools.has("get_market_scan"), true);
-  assert.equal(tools.has("get_sample"), true);
-  assert.equal(tools.has("get_credit_balance"), true);
+  assert.equal(API_KEY_TOOL_DEFINITIONS.length, 10);
+  for (const name of [
+    "get_market_scan",
+    "get_sample",
+    "get_credit_balance",
+    "get_regime_stats",
+    "get_derivatives",
+    "get_derivatives_scan",
+  ]) {
+    assert.equal(tools.has(name), true);
+  }
   assert.equal(tools.get("get_market_scan").inputSchema.type, "object");
   assert.deepEqual(tools.get("get_sample").inputSchema.required, ["asset"]);
   assert.deepEqual(tools.get("get_credit_balance").inputSchema.properties, {});
+  assert.deepEqual(tools.get("get_regime_stats").inputSchema.required, ["asset"]);
+  assert.deepEqual(tools.get("get_derivatives").inputSchema.required, ["asset"]);
+  assert.deepEqual(tools.get("get_derivatives_scan").inputSchema.properties, {});
 });

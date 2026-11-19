@@ -18,6 +18,11 @@ function assetSchema(description) {
   };
 }
 
+function productIdFromAsset(prefix, asset) {
+  const value = asset.trim().toLowerCase();
+  return value.startsWith(`${prefix}-`) ? value : `${prefix}-${value}`;
+}
+
 export const API_KEY_TOOL_DEFINITIONS = Object.freeze([
   {
     name: "get_signal",
@@ -58,6 +63,31 @@ export const API_KEY_TOOL_DEFINITIONS = Object.freeze([
     inputSchema: assetSchema(
       "Asset id or symbol, e.g. BTC, ETH, SOL, or indicators-btc.",
     ),
+    annotations: { readOnlyHint: true, idempotentHint: true },
+  },
+  {
+    name: "get_regime_stats",
+    description:
+      "Get historical regime statistics for one crypto asset: episode counts, mean/median 7/14/30-day returns, hit rate, drawdown and episode-bootstrap confidence intervals. Historical statistics, not a prediction. Uses prepaid credits via X-API-Key (1 credit). Discover assets with list_assets.",
+    inputSchema: assetSchema(
+      "Asset id or symbol, e.g. BTC, ETH, SOL, or regime-stats-btc.",
+    ),
+    annotations: { readOnlyHint: true, idempotentHint: true },
+  },
+  {
+    name: "get_derivatives",
+    description:
+      "Get Hyperliquid perpetual derivatives data for one crypto asset: hourly funding (8h equivalent and annualized), open interest, mark and oracle price, and basis. Uses prepaid credits via X-API-Key (1 credit). Discover assets with list_assets.",
+    inputSchema: assetSchema(
+      "Asset id or symbol, e.g. BTC, ETH, SOL, or derivatives-btc.",
+    ),
+    annotations: { readOnlyHint: true, idempotentHint: true },
+  },
+  {
+    name: "get_derivatives_scan",
+    description:
+      "Get the Hyperliquid perpetual derivatives scan: funding and open interest rankings across all assets with fresh derivatives data. Uses prepaid credits via X-API-Key (1 credit).",
+    inputSchema: EMPTY_SCHEMA,
     annotations: { readOnlyHint: true, idempotentHint: true },
   },
   {
@@ -112,6 +142,20 @@ export function resolveApiPath(name, args = {}) {
       const type = name.slice("get_".length);
       return { path: `/v1/${type}/${encodeURIComponent(asset)}` };
     }
+    case "get_regime_stats":
+    case "get_derivatives": {
+      const asset = assetFromArgs(args);
+      if (!asset) {
+        return { error: `Missing required argument "asset" for ${name}.` };
+      }
+      const prefix =
+        name === "get_regime_stats" ? "regime-stats" : "derivatives";
+      return {
+        path: `/p/${encodeURIComponent(productIdFromAsset(prefix, asset))}`,
+      };
+    }
+    case "get_derivatives_scan":
+      return { path: "/p/derivatives-scan" };
     case "get_sample": {
       const asset = assetFromArgs(args);
       if (!asset) {

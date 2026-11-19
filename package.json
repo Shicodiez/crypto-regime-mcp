@@ -1,6 +1,6 @@
 {
   "name": "@shicodiez/crypto-regime-mcp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "mcpName": "io.github.Shicodiez/crypto-regime-mcp",
   "description": "Stdio MCP bridge for crypto trend/regime tools with automatic x402 payments or prepaid credits.",
   "type": "module",

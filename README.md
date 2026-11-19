@@ -15,8 +15,8 @@ remote Streamable HTTP MCP endpoint and pays for tools in one of two ways:
 - Speaks MCP over stdio to your client.
 - Connects to `https://signal-api.shicoars.workers.dev/mcp` using Streamable HTTP.
 - Exposes the remote tools locally, including their input schemas.
-- With `SIGNAL_API_KEY`, serves paid tools through `/v1/*` using prepaid credits
-  and adds `get_credit_balance`.
+- With `SIGNAL_API_KEY`, serves paid tools through `/v1/*` and `/p/*` using
+  prepaid credits and adds `get_credit_balance`.
 - Without `SIGNAL_API_KEY`, detects x402 `PaymentRequired` responses and signs
   USDC payments on Base automatically.
 - Enforces a per-session spending limit with `MAX_SPEND_USDC` in x402 mode.
@@ -34,6 +34,10 @@ bridge then:
 
 - Calls `/v1/signal`, `/v1/market-scan`, `/v1/trend/{asset}`,
   `/v1/regime/{asset}` and `/v1/indicators/{asset}` with the `X-API-Key` header.
+- Uses the product routes `/p/regime-stats-{asset}`, `/p/derivatives-{asset}`
+  and `/p/derivatives-scan` for `get_regime_stats`, `get_derivatives` and
+  `get_derivatives_scan`, because signal-api does not expose `/v1` versions of
+  those tools.
 - Does **not** sign x402 payments and does not need `EVM_PRIVATE_KEY`.
 - Uses the free `/free/{asset}` route for `get_sample`.
 - Exposes `get_credit_balance`, which reads `GET /credits/balance`.
@@ -61,7 +65,10 @@ amount the bridge may authorize per session.
 | `get_market_scan` | 0.05 USDC | 10 | All catalog assets plus bullish/bearish, RSI and regime rankings. |
 | `get_trend` | 0.005 USDC | 1 | Daily LONG/FLAT trend signal and exposure for one asset. |
 | `get_regime` | 0.005 USDC | 1 | Bullish/bearish/lateral regime and volatility for one asset. |
+| `get_regime_stats` | 0.02 USDC | 1 | Episode counts, mean/median 7/14/30-day returns, hit rate, drawdown and bootstrap confidence intervals. Historical statistics, not a prediction. |
 | `get_indicators` | 0.005 USDC | 1 | RSI14, MACD, ATR14, Bollinger %B, returns and 30d/90d ranges. |
+| `get_derivatives` | 0.005 USDC | 1 | Hyperliquid perpetuals: hourly funding, open interest, mark/oracle price and basis for one asset. |
+| `get_derivatives_scan` | 0.05 USDC | 1 | Funding and open interest rankings across all assets with fresh derivatives data. |
 
 Network for x402: **Base mainnet** (`eip155:8453`), paid in **USDC**.
 

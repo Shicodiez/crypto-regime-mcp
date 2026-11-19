@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Shicodiez/crypto-regime-mcp",
   "title": "Crypto Regime MCP",
-  "description": "Crypto trend and regime MCP tools with automatic x402 payments or prepaid credits.",
-  "version": "0.1.4",
+  "description": "Crypto market MCP tools for trend, regime, indicators, regime statistics, market scan and Hyperliquid perpetual derivatives (funding, open interest and basis), with automatic x402 payments or prepaid credits.",
+  "version": "0.1.5",
   "websiteUrl": "https://signal-api.shicoars.workers.dev",
   "repository": {
     "url": "https://github.com/Shicodiez/crypto-regime-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "@shicodiez/crypto-regime-mcp",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
@@ -21,7 +21,7 @@
       "environmentVariables": [
         {
           "name": "SIGNAL_API_KEY",
-          "description": "Prepaid credit key (sk_...) returned by POST /credits/buy/starter or /credits/buy/pro. When set, paid tools call /v1/* with X-API-Key and no x402 signing is used.",
+          "description": "Prepaid credit key (sk_...) returned by POST /credits/buy/starter or /credits/buy/pro. When set, paid tools call /v1/* or /p/* with X-API-Key and no x402 signing is used.",
           "isRequired": false,
           "format": "string",
           "isSecret": true
