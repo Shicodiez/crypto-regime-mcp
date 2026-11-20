@@ -71,7 +71,7 @@ amount the bridge may authorize per session.
 | `get_indicators` | Get calculated daily indicators for one crypto asset: RSI14, MACD(12,26,9), ATR14, Bollinger %B, returns 7d/30d, 30d/90d ranges and... | $0.005 | 1 |
 | `get_derivatives` | Get Hyperliquid perpetual derivatives data for one crypto asset: hourly funding (8h equivalent and annualized), open interest, mark and... | $0.005 | 1 |
 | `get_derivatives_scan` | Get the Hyperliquid perpetual derivatives scan: funding and open interest rankings across all assets with fresh derivatives data. Uses... | $0.05 | 10 |
-| `get_credit_balance` | Get the remaining prepaid credits for the configured SIGNAL_API_KEY, including pack, payer and update timestamps. (solo con clave de créditos) | free | free |
+| `get_credit_balance` | Get the remaining prepaid credits for the configured SIGNAL_API_KEY, including pack, payer and update timestamps. (credit-key mode only) | free | free |
 <!-- TOOLS:END -->
 
 Network for x402: **Base mainnet** (`eip155:8453`), paid in **USDC**.

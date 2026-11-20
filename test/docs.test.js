@@ -196,10 +196,10 @@ test("docs merges both tool modes and writes 12 tools with prices", async () => 
     assert.match(readme, /\| `get_sample` \|.*\| free \| free \|/);
     assert.match(
       readme,
-      /\| `get_credit_balance` \|.*\(solo con clave de créditos\) \| free \| free \|/,
+      /\| `get_credit_balance` \|.*\(credit-key mode only\) \| free \| free \|/,
     );
     assert.equal(
-      (readme.match(/solo con clave de créditos/g) ?? []).length,
+      (readme.match(/credit-key mode only/g) ?? []).length,
       1,
     );
 

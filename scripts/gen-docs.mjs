@@ -19,7 +19,7 @@ const END = "<!-- TOOLS:END -->";
 const MAX_DESCRIPTION = 99;
 const SHORT_DESCRIPTION = 140;
 const PLACEHOLDER_KEY = "sk_placeholder_docs";
-const CREDIT_ONLY_SUFFIX = "(solo con clave de créditos)";
+const CREDIT_ONLY_SUFFIX = "(credit-key mode only)";
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, "utf8"));
