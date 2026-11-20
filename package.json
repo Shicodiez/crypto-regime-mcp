@@ -1,6 +1,6 @@
 {
   "name": "@shicodiez/crypto-regime-mcp",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "mcpName": "io.github.Shicodiez/crypto-regime-mcp",
   "description": "Stdio MCP bridge for crypto trend/regime tools with automatic x402 payments or prepaid credits.",
   "type": "module",
@@ -41,7 +41,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Shicodiez/crypto-regime-mcp.git"
+    "url": "https://github.com/Shicodiez/crypto-regime-mcp"
   },
   "homepage": "https://signal-api.shicoars.workers.dev",
   "dependencies": {

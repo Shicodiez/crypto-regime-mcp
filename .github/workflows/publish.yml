@@ -1,0 +1,77 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check generated docs
+        run: npm run docs:check
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Check version matches tag
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          SERVER=$(node -p "require('./server.json').version")
+          SERVER_PKG=$(node -p "require('./server.json').packages[0].version")
+          echo "tag=$TAG package=$PKG server=$SERVER server_package=$SERVER_PKG"
+          test "$TAG" = "$PKG"
+          test "$TAG" = "$SERVER"
+          test "$TAG" = "$SERVER_PKG"
+
+      - name: Publish to npm (OIDC, no token)
+        run: npm publish --access public
+
+      - name: Wait for npm to serve the new version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          for attempt in $(seq 1 60); do
+            VERSION=$(npm view @shicodiez/crypto-regime-mcp version 2>/dev/null || true)
+            echo "attempt=$attempt version=$VERSION"
+            if [ "$VERSION" = "$TAG" ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "npm did not serve version $TAG within 5 minutes"
+          exit 1
+
+      - name: Install official mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" \
+            | tar -xz mcp-publisher
+          sudo install -m 0755 mcp-publisher /usr/local/bin/mcp-publisher
+          mcp-publisher --version
+
+      - name: Login to MCP registry with GitHub OIDC
+        run: mcp-publisher login github-oidc
+
+      - name: Publish to MCP registry
+        run: mcp-publisher publish
