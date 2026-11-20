@@ -3,7 +3,7 @@
   "name": "io.github.Shicodiez/crypto-regime-mcp",
   "title": "Crypto Regime MCP",
   "description": "Crypto trend, regime, indicators, regime stats, market scan and Hyperliquid perps; credits or x402.",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "websiteUrl": "https://signal-api.shicoars.workers.dev",
   "repository": {
     "url": "https://github.com/Shicodiez/crypto-regime-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "@shicodiez/crypto-regime-mcp",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"

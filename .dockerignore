@@ -1,0 +1,7 @@
+.git
+.gitignore
+node_modules
+.env*
+.npmrc
+mcp-publisher.exe
+test

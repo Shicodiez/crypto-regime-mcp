@@ -20,24 +20,43 @@ import {
 import {
   DEFAULT_MCP_URL,
   DEFAULT_NETWORK,
-  getPrivateKey,
+  isPaidTool,
   parseMaxSpend,
   resolveApiBaseUrl,
-  resolveSignalApiKey,
+  resolveAuthMode,
 } from "./config.js";
 import { createSpendTracker, usdcFromAtomic } from "./spend.js";
 
-const VERSION = "0.1.4";
+const VERSION = "0.1.6";
 
 function log(message) {
   // stdout is reserved for the MCP stdio protocol.
   console.error(`[crypto-regime-mcp] ${message}`);
 }
 
+function noKeyPaymentResult(name) {
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({
+          error: `Tool "${name}" requires payment. Set SIGNAL_API_KEY for prepaid credits or EVM_PRIVATE_KEY for x402. No payment was signed or sent.`,
+        }),
+      },
+    ],
+    isError: true,
+  };
+}
+
+function isPaymentRequiredError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /\b402\b|payment required|paymentrequired|x402/i.test(message);
+}
+
 async function main() {
   const env = process.env;
   const mcpUrl = env.SIGNAL_API_MCP_URL ?? DEFAULT_MCP_URL;
-  const apiKey = resolveSignalApiKey(env);
+  const auth = resolveAuthMode(env);
   const apiBaseUrl = resolveApiBaseUrl(env, mcpUrl);
   const transport = new StreamableHTTPClientTransport(new URL(mcpUrl));
 
@@ -45,15 +64,22 @@ async function main() {
   let apiClient = null;
   let account = null;
   let maxSpendUsdc = null;
+  const noKeyMode = auth.mode === "nokey";
 
-  if (apiKey) {
+  if (auth.mode === "credits") {
     client = new Client({ name: "crypto-regime-mcp", version: VERSION });
     await client.connect(transport);
-    apiClient = createSignalApiClient({ baseUrl: apiBaseUrl, apiKey });
+    apiClient = createSignalApiClient({
+      baseUrl: apiBaseUrl,
+      apiKey: auth.apiKey,
+    });
+  } else if (auth.mode === "nokey") {
+    client = new Client({ name: "crypto-regime-mcp", version: VERSION });
+    await client.connect(transport);
   } else {
     const network = env.NETWORK ?? DEFAULT_NETWORK;
     maxSpendUsdc = parseMaxSpend(env.MAX_SPEND_USDC);
-    account = privateKeyToAccount(getPrivateKey(env));
+    account = privateKeyToAccount(auth.privateKey);
     const tracker = createSpendTracker(maxSpendUsdc);
 
     const paymentClient = createx402MCPClient({
@@ -119,12 +145,15 @@ async function main() {
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+    if (noKeyMode && isPaidTool(name)) {
+      return noKeyPaymentResult(name);
+    }
     try {
       if (apiClient && isApiKeyTool(name)) {
         return await apiClient.callTool(name, args ?? {});
       }
 
-      const result = await client.callTool(name, args ?? {});
+      const result = await client.callTool({ name, arguments: args ?? {} });
       const meta = { ...(result._meta ?? {}) };
       if (result.paymentResponse) {
         meta["x402/payment-response"] = result.paymentResponse;
@@ -136,6 +165,9 @@ async function main() {
         _meta: Object.keys(meta).length > 0 ? meta : undefined,
       };
     } catch (error) {
+      if (noKeyMode && isPaymentRequiredError(error)) {
+        return noKeyPaymentResult(name);
+      }
       const message = error instanceof Error ? error.message : String(error);
       log(`tool ${name} failed: ${message}`);
       return {
@@ -146,7 +178,11 @@ async function main() {
   });
 
   await server.connect(new StdioServerTransport());
-  if (apiClient) {
+  if (noKeyMode) {
+    log(
+      `connected to ${mcpUrl} without credentials; free tools are available, paid tools return a setup error`,
+    );
+  } else if (apiClient) {
     log(
       `connected to ${mcpUrl} in credit mode via ${apiBaseUrl}; SIGNAL_API_KEY is set, paid tools use /v1/* without x402`,
     );

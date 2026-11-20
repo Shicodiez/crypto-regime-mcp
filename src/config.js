@@ -40,3 +40,33 @@ export function getPrivateKey(env = process.env) {
   }
   return raw;
 }
+
+export const PAID_TOOL_NAMES = Object.freeze([
+  "get_signal",
+  "get_market_scan",
+  "get_trend",
+  "get_regime",
+  "get_indicators",
+  "get_regime_stats",
+  "get_derivatives",
+  "get_derivatives_scan",
+]);
+
+const PAID_TOOL_NAME_SET = new Set(PAID_TOOL_NAMES);
+
+export function isPaidTool(name) {
+  return PAID_TOOL_NAME_SET.has(name);
+}
+
+export function resolveAuthMode(env = process.env) {
+  const apiKey = resolveSignalApiKey(env);
+  if (apiKey) {
+    return { mode: "credits", apiKey };
+  }
+
+  if (env.EVM_PRIVATE_KEY?.trim()) {
+    return { mode: "x402", privateKey: getPrivateKey(env) };
+  }
+
+  return { mode: "nokey" };
+}

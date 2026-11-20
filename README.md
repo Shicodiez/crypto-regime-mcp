@@ -80,10 +80,13 @@ invalid key returns HTTP 401.
 ## Requirements
 
 - Node.js **20 or newer**
-- Either a credit key from signal-api, or an EVM wallet private key with a small
-  USDC balance on Base
+- Optional: a credit key from signal-api, or an EVM wallet private key with a
+  small USDC balance on Base
 - An MCP client that supports stdio servers (Claude Desktop, Claude Code, Cursor,
   or another MCP-compatible client)
+
+Without `SIGNAL_API_KEY` or `EVM_PRIVATE_KEY` the bridge still starts, lists
+tools and serves the free tools; paid tools return a clear setup error.
 
 ## Installation
 
