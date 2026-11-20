@@ -10,11 +10,16 @@ import {
   StdioClientTransport,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
 
+import { DEFAULT_API_URL, isPaidTool } from "../src/config.js";
+import { TOOL_PRICING } from "../src/pricing.js";
+
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const START = "<!-- TOOLS:START -->";
 const END = "<!-- TOOLS:END -->";
 const MAX_DESCRIPTION = 99;
 const SHORT_DESCRIPTION = 140;
+const PLACEHOLDER_KEY = "sk_placeholder_docs";
+const CREDIT_ONLY_SUFFIX = "(solo con clave de créditos)";
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -42,43 +47,48 @@ function shortDescription(text) {
   return value || "ver descripción";
 }
 
-function accessFromDescription(text) {
-  const value = String(text ?? "").toLowerCase();
-  const free = value.indexOf("free");
-  const paid = value.search(/\bpaid\b|\bx402\b|\bcredits?\b|\bpayment\b/);
+function priceFor(tool, catalogById) {
+  if (!isPaidTool(tool.name)) {
+    return { x402: "free", credits: "free" };
+  }
 
-  if (free !== -1 && (paid === -1 || free < paid)) {
-    return "Free";
+  const pricing = TOOL_PRICING[tool.name];
+  if (!pricing) {
+    throw new Error(`missing pricing metadata for paid tool ${tool.name}`);
   }
-  if (paid !== -1) {
-    return "Paid";
+
+  const product = catalogById.get(pricing.catalogId);
+  if (!product || typeof product.price !== "string" || !product.price.trim()) {
+    throw new Error(
+      `missing x402 price for paid tool ${tool.name} (catalog id ${pricing.catalogId})`,
+    );
   }
-  if (free !== -1) {
-    return "Free";
+  if (!Number.isInteger(pricing.credits) || pricing.credits <= 0) {
+    throw new Error(`missing credits price for paid tool ${tool.name}`);
   }
-  return "ver descripción";
+
+  return { x402: product.price.trim(), credits: String(pricing.credits) };
 }
 
-function renderToolsSection(tools) {
+function renderToolsSection(tools, products) {
   const count = tools.length;
+  const catalogById = new Map(products.map((product) => [product.id, product]));
   const lines = [
-    `**${count} tools** exposed without keys. Access is inferred from each tool description.`,
+    `**${count} tools** exposed across no-key and credit modes.`,
     "",
-    "| Tool | Description | Access |",
-    "|---|---|---|",
+    "| Tool | Description | x402 price | Credits |",
+    "|---|---|---|---|",
   ];
 
   for (const tool of tools) {
     const name = `\`${tool.name}\``;
-    const description = shortDescription(tool.description);
-    const access = accessFromDescription(tool.description);
-    lines.push(`| ${name} | ${description} | ${access} |`);
-  }
-
-  if (!tools.some((tool) => tool.name === "get_credit_balance")) {
-    lines.push("");
+    let description = shortDescription(tool.description);
+    if (tool.creditOnly) {
+      description = `${description} ${CREDIT_ONLY_SUFFIX}`.trim();
+    }
+    const price = priceFor(tool, catalogById);
     lines.push(
-      "Credit mode adds the `get_credit_balance` helper (free); it is not part of the no-key tools/list.",
+      `| ${name} | ${description} | ${price.x402} | ${price.credits} |`,
     );
   }
 
@@ -134,13 +144,16 @@ function checkVersions(pkg, server) {
   return packageVersion;
 }
 
-async function listTools(mcpUrl) {
+async function listTools(mcpUrl, apiKey = null) {
   const env = { ...getDefaultEnvironment() };
   if (mcpUrl) {
     env.SIGNAL_API_MCP_URL = mcpUrl;
   }
   delete env.SIGNAL_API_KEY;
   delete env.EVM_PRIVATE_KEY;
+  if (apiKey) {
+    env.SIGNAL_API_KEY = apiKey;
+  }
 
   const transport = new StdioClientTransport({
     command: process.execPath,
@@ -189,6 +202,45 @@ async function listTools(mcpUrl) {
   }
 }
 
+async function collectTools(mcpUrl) {
+  const [noKeyTools, creditTools] = await Promise.all([
+    listTools(mcpUrl),
+    listTools(mcpUrl, PLACEHOLDER_KEY),
+  ]);
+
+  const tools = new Map();
+  for (const tool of noKeyTools) {
+    tools.set(tool.name, { ...tool, creditOnly: false });
+  }
+  for (const tool of creditTools) {
+    tools.set(tool.name, {
+      ...tool,
+      creditOnly: !noKeyTools.some((other) => other.name === tool.name),
+    });
+  }
+
+  return [...tools.values()];
+}
+
+async function fetchCatalog(apiUrl) {
+  const base = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
+  const url = new URL("catalog", base);
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`GET ${url.href} failed: HTTP ${response.status}`);
+  }
+
+  const payload = await response.json().catch(() => null);
+  if (!Array.isArray(payload?.products)) {
+    throw new Error(`GET ${url.href} did not return a products array`);
+  }
+  return payload.products;
+}
+
 function argument(flag, fallback) {
   const index = process.argv.indexOf(flag);
   if (index !== -1 && process.argv[index + 1]) {
@@ -209,13 +261,20 @@ async function main() {
     argument("--package", path.join(repoRoot, "package.json")),
   );
   const mcpUrl = argument("--mcp-url", process.env.SIGNAL_API_MCP_URL);
+  const apiUrl = argument(
+    "--api-url",
+    process.env.SIGNAL_API_URL ?? DEFAULT_API_URL,
+  );
 
   const pkg = readJson(packagePath);
   const server = readJson(serverPath);
   const version = checkVersions(pkg, server);
 
-  const tools = await listTools(mcpUrl);
-  const section = renderToolsSection(tools);
+  const [tools, products] = await Promise.all([
+    collectTools(mcpUrl),
+    fetchCatalog(apiUrl),
+  ]);
+  const section = renderToolsSection(tools, products);
   const readme = fs.readFileSync(readmePath, "utf8");
   const nextReadme = updateCountMentions(
     replaceToolsSection(readme, section),

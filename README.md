@@ -56,23 +56,22 @@ amount the bridge may authorize per session.
 ## Tools and prices
 
 <!-- TOOLS:START -->
-**11 tools** exposed without keys. Access is inferred from each tool description.
+**12 tools** exposed across no-key and credit modes.
 
-| Tool | Description | Access |
-|---|---|---|
-| `list_assets` | List supported crypto assets and product ids for signal-api. Use this first to discover valid `asset` values for get_trend/get_regime... | Free |
-| `get_catalog` | Return the full signal-api catalog: active products, types, params, prices and descriptions. Use when you need the complete product list... | Free |
-| `get_sample` | Get a free sample of the last completed daily trend and regime for BTC or ETH. The sample is delayed by one day: today's live data and... | Free |
-| `get_signal` | Get the combined daily trend signal for the default basket (BTC + ETH): signal (LONG/FLAT), exposure, SMA50, 30-day volatility, close... | Paid |
-| `get_market_scan` | One call to see what is strong/weak now: every catalog asset with trend, regime, RSI14, 7d/30d returns and distance to the 30d high/low... | Paid |
-| `get_trend` | Get the daily trend signal for one crypto asset: signal (LONG/FLAT), exposure, SMA50, 30-day volatility, close and dates. Use when you... | Paid |
-| `get_regime` | Get the market regime for one crypto asset: trend (bullish/bearish/lateral), volatility (low/medium/high/unknown), SMA50 slope, 30-day... | Paid |
-| `get_regime_stats` | Get historical regime statistics for one crypto asset: episode counts, mean/median 7/14/30-day returns, hit rate, drawdown and... | Paid |
-| `get_indicators` | Get calculated daily indicators for one crypto asset: RSI14, MACD(12,26,9), ATR14 absolute and percent, Bollinger(20,2) with %B, returns... | Paid |
-| `get_derivatives` | Perpetuos de Hyperliquid: funding (por hora, equivalente a 8 h y anual), open interest, basis mark-oráculo; actualizado cada hora; sin... | Paid |
-| `get_derivatives_scan` | Escaneo de derivados. Perpetuos de Hyperliquid: funding (por hora, equivalente a 8 h y anual), open interest, basis mark-oráculo... | Paid |
-
-Credit mode adds the `get_credit_balance` helper (free); it is not part of the no-key tools/list.
+| Tool | Description | x402 price | Credits |
+|---|---|---|---|
+| `list_assets` | List supported crypto assets and product ids for signal-api. Use this first to discover valid `asset` values for get_trend/get_regime... | free | free |
+| `get_catalog` | Return the full signal-api catalog: active products, types, params, prices and descriptions. Use when you need the complete product list... | free | free |
+| `get_sample` | Get a free 1-day-delayed trend and regime sample for BTC or ETH. Today's live data and the other assets are paid. Free, limited to 60... | free | free |
+| `get_signal` | Get the combined BTC + ETH daily trend signal with exposure, SMA50, volatility and close. Uses prepaid credits via X-API-Key (1 credit). | $0.01 | 1 |
+| `get_market_scan` | One call to see what is strong/weak now: every catalog asset with trend, regime, RSI14, 7d/30d returns and distance to the 30d high/low... | $0.05 | 10 |
+| `get_trend` | Get the daily trend signal for one crypto asset: LONG/FLAT, exposure, SMA50, 30d volatility and close. Uses prepaid credits via... | $0.005 | 1 |
+| `get_regime` | Get the market regime for one crypto asset: bullish/bearish/lateral trend, low/medium/high volatility, SMA50 slope and close. Uses... | $0.005 | 1 |
+| `get_regime_stats` | Get historical regime statistics for one crypto asset: episode counts, mean/median 7/14/30-day returns, hit rate, drawdown and... | $0.02 | 4 |
+| `get_indicators` | Get calculated daily indicators for one crypto asset: RSI14, MACD(12,26,9), ATR14, Bollinger %B, returns 7d/30d, 30d/90d ranges and... | $0.005 | 1 |
+| `get_derivatives` | Get Hyperliquid perpetual derivatives data for one crypto asset: hourly funding (8h equivalent and annualized), open interest, mark and... | $0.005 | 1 |
+| `get_derivatives_scan` | Get the Hyperliquid perpetual derivatives scan: funding and open interest rankings across all assets with fresh derivatives data. Uses... | $0.05 | 10 |
+| `get_credit_balance` | Get the remaining prepaid credits for the configured SIGNAL_API_KEY, including pack, payer and update timestamps. (solo con clave de créditos) | free | free |
 <!-- TOOLS:END -->
 
 Network for x402: **Base mainnet** (`eip155:8453`), paid in **USDC**.
