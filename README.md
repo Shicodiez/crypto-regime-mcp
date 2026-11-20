@@ -55,20 +55,25 @@ amount the bridge may authorize per session.
 
 ## Tools and prices
 
-| Tool | x402 price | Credits | Description |
-|---|---:|---:|---|
-| `list_assets` | Free | Free | List supported assets, product ids and prices. Call this first. |
-| `get_catalog` | Free | Free | Full product catalog with parameters, prices and descriptions. |
-| `get_sample` | Free | Free | 1-day-delayed BTC/ETH trend and regime sample. 60 calls/hour per IP. |
-| `get_credit_balance` | n/a | Free | Remaining credits for the configured `SIGNAL_API_KEY`. Credit mode only. |
-| `get_signal` | 0.01 USDC | 1 | Combined BTC + ETH daily trend signal. |
-| `get_market_scan` | 0.05 USDC | 10 | All catalog assets plus bullish/bearish, RSI and regime rankings. |
-| `get_trend` | 0.005 USDC | 1 | Daily LONG/FLAT trend signal and exposure for one asset. |
-| `get_regime` | 0.005 USDC | 1 | Bullish/bearish/lateral regime and volatility for one asset. |
-| `get_regime_stats` | 0.02 USDC | 4 | Episode counts, mean/median 7/14/30-day returns, hit rate, drawdown and bootstrap confidence intervals. Historical statistics, not a prediction. |
-| `get_indicators` | 0.005 USDC | 1 | RSI14, MACD, ATR14, Bollinger %B, returns and 30d/90d ranges. |
-| `get_derivatives` | 0.005 USDC | 1 | Hyperliquid perpetuals: hourly funding, open interest, mark/oracle price and basis for one asset. |
-| `get_derivatives_scan` | 0.05 USDC | 10 | Funding and open interest rankings across all assets with fresh derivatives data. |
+<!-- TOOLS:START -->
+**11 tools** exposed without keys. Access is inferred from each tool description.
+
+| Tool | Description | Access |
+|---|---|---|
+| `list_assets` | List supported crypto assets and product ids for signal-api. Use this first to discover valid `asset` values for get_trend/get_regime... | Free |
+| `get_catalog` | Return the full signal-api catalog: active products, types, params, prices and descriptions. Use when you need the complete product list... | Free |
+| `get_sample` | Get a free sample of the last completed daily trend and regime for BTC or ETH. The sample is delayed by one day: today's live data and... | Free |
+| `get_signal` | Get the combined daily trend signal for the default basket (BTC + ETH): signal (LONG/FLAT), exposure, SMA50, 30-day volatility, close... | Paid |
+| `get_market_scan` | One call to see what is strong/weak now: every catalog asset with trend, regime, RSI14, 7d/30d returns and distance to the 30d high/low... | Paid |
+| `get_trend` | Get the daily trend signal for one crypto asset: signal (LONG/FLAT), exposure, SMA50, 30-day volatility, close and dates. Use when you... | Paid |
+| `get_regime` | Get the market regime for one crypto asset: trend (bullish/bearish/lateral), volatility (low/medium/high/unknown), SMA50 slope, 30-day... | Paid |
+| `get_regime_stats` | Get historical regime statistics for one crypto asset: episode counts, mean/median 7/14/30-day returns, hit rate, drawdown and... | Paid |
+| `get_indicators` | Get calculated daily indicators for one crypto asset: RSI14, MACD(12,26,9), ATR14 absolute and percent, Bollinger(20,2) with %B, returns... | Paid |
+| `get_derivatives` | Perpetuos de Hyperliquid: funding (por hora, equivalente a 8 h y anual), open interest, basis mark-oráculo; actualizado cada hora; sin... | Paid |
+| `get_derivatives_scan` | Escaneo de derivados. Perpetuos de Hyperliquid: funding (por hora, equivalente a 8 h y anual), open interest, basis mark-oráculo... | Paid |
+
+Credit mode adds the `get_credit_balance` helper (free); it is not part of the no-key tools/list.
+<!-- TOOLS:END -->
 
 Network for x402: **Base mainnet** (`eip155:8453`), paid in **USDC**.
 
