@@ -56,13 +56,16 @@ amount the bridge may authorize per session.
 ## Tools and prices
 
 <!-- TOOLS:START -->
-**12 tools** exposed across no-key and credit modes.
+**15 tools** exposed across no-key and credit modes.
 
 | Tool | Description | x402 price | Credits |
 |---|---|---|---|
 | `list_assets` | List supported crypto assets and product ids for signal-api. Use this first to discover valid `asset` values for get_trend/get_regime... | free | free |
 | `get_catalog` | Return the full signal-api catalog: active products, types, params, prices and descriptions. Use when you need the complete product list... | free | free |
 | `get_sample` | Get a free 1-day-delayed trend and regime sample for BTC or ETH. Today's live data and the other assets are paid. Free, limited to 60... | free | free |
+| `get_x402_radar` | Get the daily public x402 market radar: top services by on-chain buyers, USDC revenue, repeat buyers, categories and listed prices. Uses... | $0.005 | 1 |
+| `get_x402_trust` | Technical check for one measured x402 resource: responds, valid 402, payment header size, price coherence, availability and on-chain... | $0.005 | 1 |
+| `get_x402_trust_top` | Technical check ranking of the top measured x402 services: availability, valid 402, payable header, price coherence, on-chain sales... | $0.01 | 2 |
 | `get_signal` | Get the combined BTC + ETH daily trend signal with exposure, SMA50, volatility and close. Uses prepaid credits via X-API-Key (1 credit). | $0.01 | 1 |
 | `get_market_scan` | One call to see what is strong/weak now: every catalog asset with trend, regime, RSI14, 7d/30d returns and distance to the 30d high/low... | $0.05 | 10 |
 | `get_trend` | Get the daily trend signal for one crypto asset: LONG/FLAT, exposure, SMA50, 30d volatility and close. Uses prepaid credits via... | $0.005 | 1 |

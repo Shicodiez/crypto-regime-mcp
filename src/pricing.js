@@ -15,6 +15,12 @@ export const TOOL_PRICING = Object.freeze({
     catalogId: "derivatives-scan",
     credits: 10,
   }),
+  get_x402_radar: Object.freeze({ catalogId: "x402-radar", credits: 1 }),
+  get_x402_trust: Object.freeze({ catalogId: "x402-trust", credits: 1 }),
+  get_x402_trust_top: Object.freeze({
+    catalogId: "x402-trust-top",
+    credits: 2,
+  }),
 });
 
 export function getToolPricing(name) {

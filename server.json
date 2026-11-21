@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Shicodiez/crypto-regime-mcp",
   "title": "Crypto Regime MCP",
-  "description": "Crypto trend, regime, indicators, stats, scan and perps; 12 tools; credits or x402.",
-  "version": "0.1.7",
+  "description": "Crypto trend, regime, indicators, stats, scan and perps; 15 tools; credits or x402.",
+  "version": "0.1.8",
   "websiteUrl": "https://signal-api.shicoars.workers.dev",
   "repository": {
     "url": "https://github.com/Shicodiez/crypto-regime-mcp",
@@ -13,7 +13,7 @@
     {
       "registryType": "npm",
       "identifier": "@shicodiez/crypto-regime-mcp",
-  "version": "0.1.7",
+      "version": "0.1.8",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"

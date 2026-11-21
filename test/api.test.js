@@ -77,6 +77,9 @@ test("maps every credit-mode tool to the expected REST route", async () => {
     ["get_regime_stats", { asset: "BTC" }, "/p/regime-stats-btc"],
     ["get_derivatives", { asset: "eth" }, "/p/derivatives-eth"],
     ["get_derivatives_scan", {}, "/p/derivatives-scan"],
+    ["get_x402_radar", {}, "/v1/x402-radar"],
+    ["get_x402_trust", { url: "https://example.com/x402" }, "/p/x402-trust?url=https%3A%2F%2Fexample.com%2Fx402"],
+    ["get_x402_trust_top", {}, "/p/x402-trust-top"],
     ["get_sample", { asset: "BTC" }, "/free/BTC"],
     ["get_credit_balance", {}, "/credits/balance"],
   ];
@@ -115,6 +118,8 @@ test("credit-mode /p tools charge product-specific credits and accept full produ
     ],
     ["get_derivatives", { asset: "derivatives-ETH" }, "/p/derivatives-eth", 1],
     ["get_derivatives_scan", {}, "/p/derivatives-scan", 10],
+    ["get_x402_radar", {}, "/v1/x402-radar", 1],
+    ["get_x402_trust_top", {}, "/p/x402-trust-top", 2],
   ];
   const charges = new Map(cases.map(([, , path, charged]) => [path, charged]));
   const { client, calls } = clientWith((url) => {
@@ -194,7 +199,7 @@ test("exposes all ten credit-mode tool definitions", () => {
     API_KEY_TOOL_DEFINITIONS.map((tool) => [tool.name, tool]),
   );
 
-  assert.equal(API_KEY_TOOL_DEFINITIONS.length, 10);
+  assert.equal(API_KEY_TOOL_DEFINITIONS.length, 13);
   for (const name of [
     "get_market_scan",
     "get_sample",
@@ -211,4 +216,6 @@ test("exposes all ten credit-mode tool definitions", () => {
   assert.deepEqual(tools.get("get_regime_stats").inputSchema.required, ["asset"]);
   assert.deepEqual(tools.get("get_derivatives").inputSchema.required, ["asset"]);
   assert.deepEqual(tools.get("get_derivatives_scan").inputSchema.properties, {});
+  assert.deepEqual(tools.get("get_x402_trust").inputSchema.required, ["url"]);
+  assert.deepEqual(tools.get("get_x402_trust_top").inputSchema.properties, {});
 });

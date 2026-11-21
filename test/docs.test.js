@@ -21,6 +21,9 @@ const upstreamTools = [
   "get_indicators",
   "get_derivatives",
   "get_derivatives_scan",
+  "get_x402_radar",
+  "get_x402_trust",
+  "get_x402_trust_top",
 ].map((name) => ({
   name,
   description: `${name} description.`,
@@ -36,6 +39,9 @@ const catalogProducts = [
   { id: "regime-stats-btc", price: "$0.02", priceUsdc: 0.02 },
   { id: "derivatives-btc", price: "$0.005", priceUsdc: 0.005 },
   { id: "derivatives-scan", price: "$0.05", priceUsdc: 0.05 },
+  { id: "x402-radar", price: "$0.005", priceUsdc: 0.005 },
+  { id: "x402-trust", price: "$0.005", priceUsdc: 0.005 },
+  { id: "x402-trust-top", price: "$0.01", priceUsdc: 0.01 },
 ];
 
 function startMockServer({ products = catalogProducts } = {}) {
@@ -180,7 +186,7 @@ function runDocs(mock, files, extraArgs = []) {
   });
 }
 
-test("docs merges both tool modes and writes 12 tools with prices", async () => {
+test("docs merges both tool modes and writes 15 tools with prices", async () => {
   const mock = await startMockServer();
   const temp = makeTempCopy();
   try {
@@ -188,7 +194,7 @@ test("docs merges both tool modes and writes 12 tools with prices", async () => 
     assert.equal(write.code, 0, write.stderr);
 
     const readme = fs.readFileSync(temp.files["README.md"], "utf8");
-    assert.match(readme, /\*\*12 tools\*\*/);
+    assert.match(readme, /\*\*15 tools\*\*/);
     assert.match(readme, /\| `get_signal` \|.*\| \$0\.01 \| 1 \|/);
     assert.match(readme, /\| `get_market_scan` \|.*\| \$0\.05 \| 10 \|/);
     assert.match(readme, /\| `get_regime_stats` \|.*\| \$0\.02 \| 4 \|/);
@@ -212,6 +218,9 @@ test("docs merges both tool modes and writes 12 tools with prices", async () => 
       "get_regime_stats",
       "get_derivatives",
       "get_derivatives_scan",
+      "get_x402_radar",
+      "get_x402_trust",
+      "get_x402_trust_top",
     ];
     for (const name of paidTools) {
       const row = readme
@@ -226,12 +235,12 @@ test("docs merges both tool modes and writes 12 tools with prices", async () => 
     const server = JSON.parse(
       fs.readFileSync(temp.files["server.json"], "utf8"),
     );
-    assert.match(server.description, /12 tools/);
+    assert.match(server.description, /15 tools/);
     assert.ok(server.description.length <= 99);
 
     const check = await runDocs(mock, temp.files, ["--check"]);
     assert.equal(check.code, 0, check.stderr);
-    assert.match(check.stdout, /docs:check OK: 12 tools/);
+    assert.match(check.stdout, /docs:check OK: 15 tools/);
   } finally {
     fs.rmSync(temp.dir, { recursive: true, force: true });
     await closeServer(mock.server);
@@ -267,7 +276,7 @@ test("docs:check fails when README is stale", async () => {
     const readme = fs.readFileSync(readmePath, "utf8");
     fs.writeFileSync(
       readmePath,
-      readme.replace("**12 tools**", "**999 tools**"),
+      readme.replace("**15 tools**", "**999 tools**"),
       "utf8",
     );
 

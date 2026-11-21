@@ -50,6 +50,9 @@ export const PAID_TOOL_NAMES = Object.freeze([
   "get_regime_stats",
   "get_derivatives",
   "get_derivatives_scan",
+  "get_x402_radar",
+  "get_x402_trust",
+  "get_x402_trust_top",
 ]);
 
 const PAID_TOOL_NAME_SET = new Set(PAID_TOOL_NAMES);

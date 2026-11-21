@@ -27,7 +27,7 @@ import {
 } from "./config.js";
 import { createSpendTracker, usdcFromAtomic } from "./spend.js";
 
-const VERSION = "0.1.6";
+const VERSION = "0.1.8";
 
 function log(message) {
   // stdout is reserved for the MCP stdio protocol.

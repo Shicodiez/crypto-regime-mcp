@@ -91,6 +91,37 @@ export const API_KEY_TOOL_DEFINITIONS = Object.freeze([
     annotations: { readOnlyHint: true, idempotentHint: true },
   },
   {
+    name: "get_x402_radar",
+    description:
+      "Get the daily public x402 market radar: top services by on-chain buyers, USDC revenue, repeat buyers, categories and listed prices. Uses prepaid credits via X-API-Key (1 credit).",
+    inputSchema: EMPTY_SCHEMA,
+    annotations: { readOnlyHint: true, idempotentHint: true },
+  },
+  {
+    name: "get_x402_trust",
+    description:
+      "Technical check for one measured x402 resource: responds, valid 402, payment header size, price coherence, availability and on-chain sales. Mide solo si responde y cobra como anuncia; no evalúa si es honesto ni seguro. Uses prepaid credits via X-API-Key (1 credit).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description: "Exact x402 resource URL measured in the daily technical check.",
+        },
+      },
+      required: ["url"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, idempotentHint: true },
+  },
+  {
+    name: "get_x402_trust_top",
+    description:
+      "Technical check ranking of the top measured x402 services: availability, valid 402, payable header, price coherence, on-chain sales, score and verdict. Uses prepaid credits via X-API-Key (2 credits).",
+    inputSchema: EMPTY_SCHEMA,
+    annotations: { readOnlyHint: true, idempotentHint: true },
+  },
+  {
     name: "get_sample",
     description:
       "Get a free 1-day-delayed trend and regime sample for BTC or ETH. Today's live data and the other assets are paid. Free, limited to 60 calls/hour per IP.",
@@ -156,6 +187,27 @@ export function resolveApiPath(name, args = {}) {
     }
     case "get_derivatives_scan":
       return { path: "/p/derivatives-scan" };
+    case "get_x402_radar":
+      return { path: "/v1/x402-radar" };
+    case "get_x402_trust_top":
+      return { path: "/p/x402-trust-top" };
+    case "get_x402_trust": {
+      const raw = String(args?.url ?? "").trim();
+      if (!raw) {
+        return { error: 'Missing required argument "url" for get_x402_trust.' };
+      }
+      try {
+        const url = new URL(raw);
+        if (url.protocol !== "https:" && url.protocol !== "http:") {
+          return { error: "url must use http or https." };
+        }
+        return {
+          path: `/p/x402-trust?url=${encodeURIComponent(url.toString())}`,
+        };
+      } catch {
+        return { error: "url must be a valid absolute URL." };
+      }
+    }
     case "get_sample": {
       const asset = assetFromArgs(args);
       if (!asset) {
